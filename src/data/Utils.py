@@ -3,6 +3,9 @@ import subprocess
 import pandas as pd
 import zipfile
 import xgboost as xgb
+from hyperopt import STATUS_OK
+from sklearn.metrics import accuracy_score
+from typing import Any, Dict, Union
 
 
 class Utils:
@@ -147,13 +150,13 @@ class Utils:
             r=df_.Q16_Part_2.fillna(0).replace("R", 1),
             sql=df_.Q16_Part_3.fillna(0).replace("SQL", 1),
         ).loc[  # Assign
-            :,
-            "Q1,Q3,age,education,major,years_exp,compensation,python,r,sql".split(","),
-        ]
+               :,
+               "Q1,Q3,age,education,major,years_exp,compensation,python,r,sql".split(","),
+               ]
 
     @staticmethod
     def my_dot_export(
-        xg, num_trees, filename: str, title: str = "", direction: str = "TB"
+            xg, num_trees, filename: str, title: str = "", direction: str = "TB"
     ) -> object:
         """
         Export a specified number of trees from an XGBoost model as a graph.
@@ -187,3 +190,52 @@ class Utils:
             fout.write(out)
         png_filename = dot_filename.replace(".dot", ".png")
         subprocess.run(f"dot -GDPI=300 -TPNG -o{png_filename} {dot_filename}".split())
+
+    @staticmethod
+    def hyperparameter_tuning(space: Dict[str, Union[float, int]],
+                            X_train: pd.DataFrame,
+                            y_train: pd.Series,
+                            X_test: pd.DataFrame,
+                            y_test: pd.Series,
+                            early_stopping_rounds: int = 50,
+                            metric: callable = accuracy_score
+                            ) -> Dict[str, Any]:
+        """
+        Perform hyperparameter tuning for and XGBoost classifier.
+        This function takes a dictionary of hyperparameters, training and
+        test data, and a optional value for early stopping rounds, and returns
+        a dictionary with the loss and model resulting from the tuning procces.
+        The model is trained using the training data and evaluated using the test data.
+        The loss is computed as the negative of the accuracy score.
+
+        Parameters:
+            space: Dict[str, Union[float, int]]
+                A dictionary of hyperparameters for the XGBoost Classifier.
+            X_train: pd.DataFrame
+                The training data.
+            y_train: pd.Series
+                The training target.
+            X_test: pd.DataFrame
+                The test data.
+            y_test: pd.Series
+                The test target.
+            early_stopping_rounds: int, optional, default `50`
+                The number of rounds of early stopping to use.
+            metric: callable, optional, default `accuracy_score`
+                The metric to maximize.
+
+            Returns:
+                Dict[str, Any],
+                    A dictionary containing the loss and model resulting from the tuning process.
+                    The loss ´is a float' and the model is an ´XGBoost Classifier'
+        """
+        int_vals = ['max_depth', 'reg_alpha']
+        space = {k: (int(val) if k in int_vals else val)
+                 for k, val in space.items()}
+        space['early_stopping_rounds'] = early_stopping_rounds
+        model = xgb.XGBClassifier(**space)
+        evaluation = [(X_train, y_train), (X_test, y_test)]
+        model.fit(X_train, y_train, eval_set=evaluation, verbose=False)
+        pred = model.predict(X_test)
+        score = metric(y_test, pred)
+        return {'loss': -score, 'status': STATUS_OK, 'model': model}

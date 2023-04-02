@@ -310,10 +310,20 @@ class Utils:
         )
         fig.update_layout(
             title=dict(text=f"{y_col} vs {x_col}"),
+<<<<<<< HEAD
             scene=dict(xaxis_title=x_col, yaxis_title=y_col, zaxis_title=z_col),
             width=600,
             margin=dict(r=20, b=10, l=10, t=50),
         )
+=======
+            scene=dict(
+                xaxis_title=x_col,
+                yaxis_title=y_col,
+                zaxis_title=z_col),
+                width=600,
+                margin=dict(r=20, b=10, l=10, t=50),
+            )
+>>>>>>> ad83aa48ac2b81d74af8db6876666a985c1d30a1
         return fig
 
     @staticmethod

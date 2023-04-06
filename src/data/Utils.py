@@ -1,4 +1,5 @@
 import urllib.request
+from pathlib import Path
 import subprocess
 import pandas as pd
 import zipfile
@@ -24,15 +25,31 @@ class Utils:
             pandas.DataFrame: DataFrame containing the contents of the
             member file
         """
-        fin = urllib.request.urlopen(src)
-        data = fin.read()
-        with open(dst, mode="wb") as fout:
-            fout.write(data)
+        src: str = src
+        dst_path: Path = Path(dst)
+        if dst_path.exists():
+            print(f"File {dst_path} already exists. Skipping download.")
+        else:
+            print(f"Downloading {src} to {dst_path}")
+            fin = urllib.request.urlopen(src)
+            data = fin.read()
+            with open(dst, mode="wb") as fout:
+                fout.write(data)
+                print(f"Downloaded and saved zip file: {dst_path}")
+
         with zipfile.ZipFile(dst) as z:
-            kag = pd.read_csv(z.open(member_name), low_memory=False)
-            kag_questions = kag.iloc[0]
-            raw = kag.iloc[1:]
-            return raw
+            if member_name not in z.namelist():
+                raise ValueError(
+                    f"Member {member_name} not found in zip file {dst_path}"
+                )
+            print(f"Extracting {member_name} from {dst_path}...")
+            with z.open(member_name) as f:
+                print(f"Reading {member_name} into a DataFrame...")
+                kag = pd.read_csv(f, low_memory=False)
+        kag_questions = kag.iloc[0]
+        raw = kag.iloc[1:]
+        print(f"Returning DataFrame with {raw.shape[0]} rows and {raw.shape[1]} columns")
+        return raw
 
     @staticmethod
     def get_rawx_y(df: pd.DataFrame, y_col: str):

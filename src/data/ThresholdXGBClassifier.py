@@ -12,3 +12,4 @@ class ThresholdXGBClassifier(xgb.XGBClassifier):
         """
         proba = self.predict_proba(X, *args, **kwargs)
         return (proba[:, 1] > self.threshold).astype(int)
+

@@ -33,11 +33,11 @@ class Utils:
             print(f"Downloading {src} to {dst_path}")
             fin = urllib.request.urlopen(src)
             data = fin.read()
-            with open(dst, mode="wb") as fout:
+            with open(dst_path, mode="wb") as fout:
                 fout.write(data)
                 print(f"Downloaded and saved zip file: {dst_path}")
 
-        with zipfile.ZipFile(dst) as z:
+        with zipfile.ZipFile(dst_path) as z:
             if member_name not in z.namelist():
                 raise ValueError(
                     f"Member {member_name} not found in zip file {dst_path}"

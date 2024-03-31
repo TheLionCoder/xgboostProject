@@ -48,7 +48,9 @@ class Utils:
                 kag = pd.read_csv(f, low_memory=False)
         kag_questions = kag.iloc[0]
         raw = kag.iloc[1:]
-        print(f"Returning DataFrame with {raw.shape[0]} rows and {raw.shape[1]} columns")
+        print(
+            f"Returning DataFrame with {raw.shape[0]} rows and {raw.shape[1]} columns"
+        )
         return raw
 
     @staticmethod
